@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sơ Đồ Thi Đấu Sumo Robot - Lớp 7</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .bracket-connector {
+            position: relative;
+        }
+        /* Custom scrollbar for bracket overflow */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+
+    <!-- HEADER -->
+    <header class="text-center mb-8 relative">
+        <!-- Toggle Sound Button -->
+        <button id="sound-toggle-btn" onclick="toggleSound()" class="absolute right-0 top-0 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition">
+            <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            <span id="sound-text">Âm thanh: BẬT</span>
+        </button>
+
+        <div class="inline-flex items-center space-x-3 mb-2">
+            <i class="fa-solid fa-robot text-4xl text-amber-500 animate-bounce"></i>
+            <h1 class="text-3xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500">
+                CUỘC THI SUMO ROBOT LỚP 7
+            </h1>
+        </div>
+        <p class="text-slate-400 text-sm md:text-base max-w-2xl mx-auto">
+            Thể thức thi đấu: <b>Đấu loại kép (Double Elimination)</b> — Thua 1 trận xuống Nhánh Thua, thua 2 trận chính thức bị loại. Nhất Nhánh Thắng gặp Nhất Nhánh Thua tại Chung Kết!
+        </p>
+    </header>
+
+    <!-- SETUP SECTION -->
+    <div id="setup-section" class="max-w-4xl mx-auto w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl mb-8">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-3">
+            <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                <i class="fa-solid fa-users-gear"></i> Danh Sách 8 Nhóm Thi Đấu
+            </h2>
+            <button onclick="fillDefaultNames()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Tên mặc định
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6" id="team-inputs">
+            <!-- Dynamic Inputs for 8 Teams -->
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="generateRandomBracket()" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black text-lg px-8 py-3 rounded-xl shadow-lg hover:shadow-orange-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-shuffle"></i> BỐC THĂM & TẠO SƠ ĐỒ NGẪU NHIÊN
+            </button>
+            <button onclick="resetTournament()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-5 py-3 rounded-xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> Làm Mới
+            </button>
+        </div>
+    </div>
+
+    <!-- TOURNAMENT BRACKET VISUALIZER -->
+    <main id="bracket-section" class="hidden flex-col gap-10 max-w-7xl mx-auto w-full overflow-x-auto pb-6">
+
+        <!-- CHAMPION BANNER -->
+        <div id="champion-banner" class="hidden bg-gradient-to-r from-amber-500/20 via-yellow-500/30 to-amber-500/20 border-2 border-amber-400 rounded-2xl p-6 text-center animate-pulse shadow-2xl">
+            <i class="fa-solid fa-trophy text-6xl text-amber-400 mb-2"></i>
+            <h2 class="text-3xl font-black text-amber-300">NHÀ VÔ ĐỊCH SUMO ROBOT</h2>
+            <div id="champion-name" class="text-4xl font-black text-white mt-2 drop-shadow-md">NHÓM ...</div>
+            <div id="runner-up-name" class="text-slate-300 font-medium mt-2">Á Quân: ...</div>
+            <div id="third-place-name" class="text-amber-600/90 font-medium text-sm mt-1">Hạng Ba: ...</div>
+        </div>
+
+        <!-- 1. UPPER BRACKET (NHÁNH THẮNG) -->
+        <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl">
+            <h2 class="text-2xl font-black text-emerald-400 border-b border-slate-700 pb-3 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved"></i> NHÁNH THẮNG (UPPER BRACKET)
+                <span class="text-xs bg-emerald-500/20 text-emerald-300 font-normal px-2.5 py-1 rounded-full border border-emerald-500/30">Chưa thua trận nào</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 min-w-[750px]">
+                <!-- Tứ Kết Nhánh Thắng -->
+                <div class="space-y-6">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md">Vòng 1 (Tứ Kết)</h3>
+                    <div id="ub-match-1" class="match-card"></div>
+                    <div id="ub-match-2" class="match-card"></div>
+                    <div id="ub-match-3" class="match-card"></div>
+                    <div id="ub-match-4" class="match-card"></div>
+                </div>
+
+                <!-- Bán Kết Nhánh Thắng -->
+                <div class="space-y-6 flex flex-col justify-around">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md mb-2">Vòng 2 (Bán Kết)</h3>
+                    <div id="ub-match-5" class="match-card"></div>
+                    <div id="ub-match-6" class="match-card"></div>
+                </div>
+
+                <!-- Chung Kết Nhánh Thắng -->
+                <div class="space-y-6 flex flex-col justify-center">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md mb-2">Chung Kết Nhánh Thắng</h3>
+                    <div id="ub-match-7" class="match-card border-2 border-emerald-500/50"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LOWER BRACKET (NHÁNH THUA) -->
+        <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl">
+            <h2 class="text-2xl font-black text-rose-400 border-b border-slate-700 pb-3 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-heart-crack"></i> NHÁNH THUA (LOWER BRACKET)
+                <span class="text-xs bg-rose-500/20 text-rose-300 font-normal px-2.5 py-1 rounded-full border border-rose-500/30">Cơ hội 2 (Đã thua 1 trận)</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 min-w-[900px]">
+                <!-- Vòng 1 Nhánh Thua -->
+                <div class="space-y-6 flex flex-col justify-around">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md">Vòng 1 Nhánh Thua</h3>
+                    <div id="lb-match-1" class="match-card"></div>
+                    <div id="lb-match-2" class="match-card"></div>
+                </div>
+
+                <!-- Vòng 2 Nhánh Thua -->
+                <div class="space-y-6 flex flex-col justify-around">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md">Vòng 2 Nhánh Thua</h3>
+                    <div id="lb-match-3" class="match-card"></div>
+                    <div id="lb-match-4" class="match-card"></div>
+                </div>
+
+                <!-- Bán Kết Nhánh Thua -->
+                <div class="space-y-6 flex flex-col justify-center">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md mb-2">Bán Kết Nhánh Thua</h3>
+                    <div id="lb-match-5" class="match-card"></div>
+                </div>
+
+                <!-- Chung Kết Nhánh Thua -->
+                <div class="space-y-6 flex flex-col justify-center">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider text-center bg-slate-900/50 py-1.5 rounded-md mb-2">Chung Kết Nhánh Thua</h3>
+                    <div id="lb-match-6" class="match-card border-2 border-rose-500/50"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. GRAND FINAL (CHUNG KẾT TỔNG) -->
+        <div class="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 shadow-2xl">
+            <h2 class="text-2xl font-black text-amber-400 text-center mb-6 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-crown text-3xl text-amber-400"></i> TRẬN CHUNG KẾT TỔNG (GRAND FINAL)
+            </h2>
+            
+            <div class="max-w-md mx-auto">
+                <div id="grand-final-match" class="match-card border-2 border-amber-400 shadow-amber-500/10"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-slate-500 text-xs py-4 border-t border-slate-800 mt-8">
+        Hệ thống quản lý sơ đồ Sumo Robot tự động | Thể thức thi đấu Double Elimination 8 Đội
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // State for Tournament
+        let teams = [];
+        let matches = {};
+        let soundEnabled = true;
+
+        // Sound Effects Engine using Web Audio API (No external sound files required)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            const text = document.getElementById('sound-text');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                text.innerText = 'Âm thanh: BẬT';
+                playSound('select');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                text.innerText = 'Âm thanh: TẮT';
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'select') {
+                // Fun Click/Pop Sound
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } 
+            else if (type === 'shuffle') {
+                // Shuffle sound sweep
+                for (let i = 0; i < 5; i++) {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(200 + Math.random() * 400, now + i * 0.06);
+                    gain.gain.setValueAtTime(0.15, now + i * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + (i + 1) * 0.06);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + i * 0.06);
+                    osc.stop(now + (i + 1) * 0.06);
+                }
+            } 
+            else if (type === 'fanfare') {
+                // Fun Winner Fanfare Melody (C major arpeggio)
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C4, E4, G4, C5, E5, G5
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    const startTime = now + idx * 0.12;
+                    const duration = idx === notes.length - 1 ? 0.6 : 0.12;
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    gain.gain.setValueAtTime(0.3, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                });
+            }
+        }
+
+        // Default team names generator
+        function fillDefaultNames() {
+            playSound('select');
+            for (let i = 1; i <= 8; i++) {
+                document.getElementById(`team-input-${i}`).value = `Nhóm ${i}`;
+            }
+        }
+
+        // Render Inputs on Load
+        function renderInputs() {
+            const container = document.getElementById('team-inputs');
+            container.innerHTML = '';
+            for (let i = 1; i <= 8; i++) {
+                container.innerHTML += `
+                    <div class="flex items-center space-x-2 bg-slate-900/60 p-2 rounded-xl border border-slate-700/60">
+                        <span class="text-amber-500 font-bold w-6 text-center">${i}</span>
+                        <input type="text" id="team-input-${i}" value="Nhóm ${i}" placeholder="Tên nhóm ${i}" 
+                            class="w-full bg-slate-800 text-slate-100 px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-500 text-sm font-medium">
+                    </div>
+                `;
+            }
+        }
+
+        // Shuffle Array (Fisher-Yates)
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // Generate Random Bracket Setup
+        function generateRandomBracket() {
+            playSound('shuffle');
+
+            // Get inputs
+            const rawTeams = [];
+            for (let i = 1; i <= 8; i++) {
+                const val = document.getElementById(`team-input-${i}`).value.trim();
+                rawTeams.push(val || `Nhóm ${i}`);
+            }
+
+            // Shuffle Teams
+            teams = shuffle([...rawTeams]);
+
+            // Initialize All Matches Structure
+            matches = {
+                // Upper Bracket Round 1
+                'ub1': { id: 'ub1', name: 'Tứ Kết 1', team1: teams[0], team2: teams[1], winner: null, loser: null },
+                'ub2': { id: 'ub2', name: 'Tứ Kết 2', team1: teams[2], team2: teams[3], winner: null, loser: null },
+                'ub3': { id: 'ub3', name: 'Tứ Kết 3', team1: teams[4], team2: teams[5], winner: null, loser: null },
+                'ub4': { id: 'ub4', name: 'Tứ Kết 4', team1: teams[6], team2: teams[7], winner: null, loser: null },
+
+                // Upper Bracket Round 2 (Semis)
+                'ub5': { id: 'ub5', name: 'Bán Kết 1 (NT)', team1: null, team2: null, winner: null, loser: null },
+                'ub6': { id: 'ub6', name: 'Bán Kết 2 (NT)', team1: null, team2: null, winner: null, loser: null },
+
+                // Upper Bracket Final
+                'ub7': { id: 'ub7', name: 'Chung Kết Nhánh Thắng', team1: null, team2: null, winner: null, loser: null },
+
+                // Lower Bracket Round 1
+                'lb1': { id: 'lb1', name: 'Tứ Kết Thua 1', team1: null, team2: null, winner: null, loser: null },
+                'lb2': { id: 'lb2', name: 'Tứ Kết Thua 2', team1: null, team2: null, winner: null, loser: null },
+
+                // Lower Bracket Round 2
+                'lb3': { id: 'lb3', name: 'Vòng Loại Thua 1', team1: null, team2: null, winner: null, loser: null },
+                'lb4': { id: 'lb4', name: 'Vòng Loại Thua 2', team1: null, team2: null, winner: null, loser: null },
+
+                // Lower Bracket Semis
+                'lb5': { id: 'lb5', name: 'Bán Kết Nhánh Thua', team1: null, team2: null, winner: null, loser: null },
+
+                // Lower Bracket Final
+                'lb6': { id: 'lb6', name: 'Chung Kết Nhánh Thua', team1: null, team2: null, winner: null, loser: null },
+
+                // Grand Final
+                'gf': { id: 'gf', name: 'Chung Kết Tổng', team1: null, team2: null, winner: null, loser: null }
+            };
+
+            // Show Bracket Section
+            document.getElementById('bracket-section').classList.remove('hidden');
+            document.getElementById('bracket-section').classList.add('flex');
+            document.getElementById('champion-banner').classList.add('hidden');
+
+            // Render Bracket UI
+            renderAllMatches();
+
+            // Smooth scroll to bracket
+            document.getElementById('bracket-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Set Winner of a Match & Update Dependencies
+        function setWinner(matchId, winningTeam) {
+            const m = matches[matchId];
+            if (!m.team1 || !m.team2) return; // Need both teams
+
+            playSound('select');
+
+            const losingTeam = (winningTeam === m.team1) ? m.team2 : m.team1;
+            m.winner = winningTeam;
+            m.loser = losingTeam;
+
+            // Propagation Rules (Double Elimination System)
+            // Upper Bracket Round 1 -> Upper Round 2 & Lower Round 1
+            if (matchId === 'ub1') { matches['ub5'].team1 = winningTeam; matches['lb1'].team1 = losingTeam; }
+            if (matchId === 'ub2') { matches['ub5'].team2 = winningTeam; matches['lb1'].team2 = losingTeam; }
+            if (matchId === 'ub3') { matches['ub6'].team1 = winningTeam; matches['lb2'].team1 = losingTeam; }
+            if (matchId === 'ub4') { matches['ub6'].team2 = winningTeam; matches['lb2'].team2 = losingTeam; }
+
+            // Upper Bracket Round 2 -> Upper Final & Lower Round 2
+            if (matchId === 'ub5') { matches['ub7'].team1 = winningTeam; matches['lb4'].team1 = losingTeam; }
+            if (matchId === 'ub6') { matches['ub7'].team2 = winningTeam; matches['lb3'].team1 = losingTeam; }
+
+            // Upper Bracket Final -> Grand Final & Lower Final
+            if (matchId === 'ub7') { matches['gf'].team1 = winningTeam; matches['lb6'].team1 = losingTeam; }
+
+            // Lower Bracket Round 1 -> Lower Round 2
+            if (matchId === 'lb1') { matches['lb3'].team2 = winningTeam; }
+            if (matchId === 'lb2') { matches['lb4'].team2 = winningTeam; }
+
+            // Lower Bracket Round 2 -> Lower Semis
+            if (matchId === 'lb3') { matches['lb5'].team1 = winningTeam; }
+            if (matchId === 'lb4') { matches['lb5'].team2 = winningTeam; }
+
+            // Lower Bracket Semis -> Lower Final
+            if (matchId === 'lb5') { matches['lb6'].team2 = winningTeam; }
+
+            // Lower Bracket Final -> Grand Final
+            if (matchId === 'lb6') { matches['gf'].team2 = winningTeam; }
+
+            // Check Grand Final Champion
+            if (matchId === 'gf') {
+                showChampion(winningTeam, losingTeam, matches['lb6'].loser);
+            }
+
+            renderAllMatches();
+        }
+
+        // Show Champion UI
+        function showChampion(champion, runnerUp, thirdPlace) {
+            playSound('fanfare');
+            const banner = document.getElementById('champion-banner');
+            document.getElementById('champion-name').innerText = champion;
+            document.getElementById('runner-up-name').innerText = `🏆 Á Quân: ${runnerUp || 'Chưa xác định'}`;
+            document.getElementById('third-place-name').innerText = `🥉 Hạng Ba: ${thirdPlace || 'Chưa xác định'}`;
+            banner.classList.remove('hidden');
+            banner.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Build Individual Match Card UI
+        function createMatchHTML(match) {
+            const isT1Winner = match.winner && match.winner === match.team1;
+            const isT2Winner = match.winner && match.winner === match.team2;
+
+            const t1Class = isT1Winner ? 'bg-amber-500/20 text-amber-300 font-bold border-amber-500/50' : 'bg-slate-900/80 text-slate-300';
+            const t2Class = isT2Winner ? 'bg-amber-500/20 text-amber-300 font-bold border-amber-500/50' : 'bg-slate-900/80 text-slate-300';
+
+            return `
+                <div class="bg-slate-900 border border-slate-700/80 rounded-xl overflow-hidden shadow-md">
+                    <div class="text-[11px] font-semibold text-slate-400 bg-slate-800/90 px-3 py-1 border-b border-slate-700/60 flex justify-between items-center">
+                        <span>${match.name}</span>
+                        ${match.winner ? '<span class="text-amber-400 text-[10px]"><i class="fa-solid fa-check"></i> Xong</span>' : ''}
+                    </div>
+                    <div class="p-2 space-y-1.5">
+                        <!-- Team 1 -->
+                        <button onclick="setWinner('${match.id}', '${match.team1}')" 
+                            ${!match.team1 || !match.team2 ? 'disabled' : ''}
+                            class="w-full text-left px-3 py-2 rounded-lg border border-slate-700/50 transition flex justify-between items-center ${t1Class} ${match.team1 && match.team2 ? 'hover:border-amber-500/50 hover:bg-slate-800' : 'cursor-not-allowed opacity-60'}">
+                            <span class="truncate text-sm">${match.team1 || '<i>Chờ xác định...</i>'}</span>
+                            ${isT1Winner ? '<i class="fa-solid fa-crown text-amber-400 text-xs"></i>' : ''}
+                        </button>
+                        
+                        <!-- Team 2 -->
+                        <button onclick="setWinner('${match.id}', '${match.team2}')" 
+                            ${!match.team1 || !match.team2 ? 'disabled' : ''}
+                            class="w-full text-left px-3 py-2 rounded-lg border border-slate-700/50 transition flex justify-between items-center ${t2Class} ${match.team1 && match.team2 ? 'hover:border-amber-500/50 hover:bg-slate-800' : 'cursor-not-allowed opacity-60'}">
+                            <span class="truncate text-sm">${match.team2 || '<i>Chờ xác định...</i>'}</span>
+                            ${isT2Winner ? '<i class="fa-solid fa-crown text-amber-400 text-xs"></i>' : ''}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render All Matches to DOM
+        function renderAllMatches() {
+            // Upper Bracket
+            document.getElementById('ub-match-1').innerHTML = createMatchHTML(matches['ub1']);
+            document.getElementById('ub-match-2').innerHTML = createMatchHTML(matches['ub2']);
+            document.getElementById('ub-match-3').innerHTML = createMatchHTML(matches['ub3']);
+            document.getElementById('ub-match-4').innerHTML = createMatchHTML(matches['ub4']);
+            document.getElementById('ub-match-5').innerHTML = createMatchHTML(matches['ub5']);
+            document.getElementById('ub-match-6').innerHTML = createMatchHTML(matches['ub6']);
+            document.getElementById('ub-match-7').innerHTML = createMatchHTML(matches['ub7']);
+
+            // Lower Bracket
+            document.getElementById('lb-match-1').innerHTML = createMatchHTML(matches['lb1']);
+            document.getElementById('lb-match-2').innerHTML = createMatchHTML(matches['lb2']);
+            document.getElementById('lb-match-3').innerHTML = createMatchHTML(matches['lb3']);
+            document.getElementById('lb-match-4').innerHTML = createMatchHTML(matches['lb4']);
+            document.getElementById('lb-match-5').innerHTML = createMatchHTML(matches['lb5']);
+            document.getElementById('lb-match-6').innerHTML = createMatchHTML(matches['lb6']);
+
+            // Grand Final
+            document.getElementById('grand-final-match').innerHTML = createMatchHTML(matches['gf']);
+        }
+
+        // Reset All Data
+        function resetTournament() {
+            playSound('select');
+            document.getElementById('bracket-section').classList.add('hidden');
+            document.getElementById('champion-banner').classList.add('hidden');
+            teams = [];
+            matches = {};
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            renderInputs();
+        };
+    </script>
+</body>
+</html>
